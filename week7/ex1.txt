@@ -1,0 +1,159 @@
+-- Create the sample table with given data
+CREATE TABLE TaskSampleTable
+(
+    orderId      int,
+    date         text,
+    customerId   int,
+    customerName text,
+    city         text,
+    itemId       int,
+    itemName     text,
+    quantity     int,
+    price        double precision
+);
+
+INSERT INTO "TaskSampleTable" (orderId, date, customerId, customerName, city, itemId, itemName, quantity, price)
+values (2301, '23/02/2011', 101, 'Martin', 'Prague', 3786, 'Net', 3, 35),
+       (2301, '23/02/2011', 101, 'Martin', 'Prague', 4011, 'Racket', 6, 65),
+       (2301, '23/02/2011', 101, 'Martin', 'Prague', 9132, 'Pack-3', 8, 4.75),
+       (2302, '25/02/2011', 107, 'Herman', 'Madrid', 5794, 'Pack-6', 4, 5),
+       (2303, '27/02/2011', 110, 'Pedro', 'Moscow', 4011, 'Racket', 2, 65),
+       (2303, '27/02/2011', 110, 'Pedro', 'Moscow', 3141, 'Cover', 2, 10);
+
+-- First normalization form (the table is similar to the first one, since it is already NF1)
+CREATE TABLE NF1
+(
+    orderId      int,
+    date         text,
+    customerId   int,
+    customerName text,
+    city         text,
+    itemId       int,
+    itemName     text,
+    quantity     int,
+    price        double precision,
+    PRIMARY KEY (orderId, itemId)
+);
+
+INSERT INTO NF1 (orderId, date, customerId, customerName, city, itemId, itemName, quantity, price)
+values (2301, '23/02/2011', 101, 'Martin', 'Prague', 3786, 'Net', 3, 35),
+       (2301, '23/02/2011', 101, 'Martin', 'Prague', 4011, 'Racket', 6, 65),
+       (2301, '23/02/2011', 101, 'Martin', 'Prague', 9132, 'Pack-3', 8, 4.75),
+       (2302, '25/02/2011', 107, 'Herman', 'Madrid', 5794, 'Pack-6', 4, 5),
+       (2303, '27/02/2011', 110, 'Pedro', 'Moscow', 4011, 'Racket', 2, 65),
+       (2303, '27/02/2011', 110, 'Pedro', 'Moscow', 3141, 'Cover', 2, 10);
+
+CREATE TABLE order_key
+(
+    date         text,
+    orderId      int,
+    city         text,
+    customerId   int,
+    customerName text,
+    PRIMARY KEY (orderId)
+);
+INSERT INTO order_key (date, orderId, city, customerId, customerName)
+SELECT DISTINCT date, orderId, city, customerId, customerName
+FROM "TaskSampleTable";
+
+
+CREATE TABLE item_key
+(
+    itemId   int,
+    itemName text,
+    PRIMARY KEY (itemId)
+);
+INSERT INTO item_key (itemId, itemName)
+SELECT DISTINCT itemId, itemName
+FROM "TaskSampleTable";
+
+-- First query for NF1
+SELECT orderId, SUM(quantity) as ordered_Items, SUM(price) as total_Price
+FROM NF1
+GROUP BY orderId;
+
+-- Second query for NF1
+SELECT customerId, customerName, SUM(price) as max_sum
+FROM NF1
+GROUP BY customerId, customerName
+ORDER BY SUM(price) DESC
+LIMIT 1;
+
+
+-- Second normalization form
+CREATE TABLE NF2
+(
+    orderId  int,
+    itemId   int,
+    quantity int,
+    price    double precision,
+    PRIMARY KEY (orderId, itemId)
+);
+INSERT INTO NF2 (orderId, itemId, quantity, price)
+SELECT orderId, itemId, quantity, price
+FROM "TaskSampleTable";
+
+--first query NF2
+SELECT NF2.orderId, SUM(quantity) as ordered_items, SUM(price) as total_price
+FROM NF2,
+     order_key,
+     item_key
+WHERE NF2.orderId = order_key.orderId
+  AND item_key.itemId = NF2.itemId
+GROUP BY NF2.orderId;
+
+--second query NF2
+SELECT customerId, customerName, SUM(price) as max_sum
+FROM NF2, order_key, item_key
+WHERE NF2.orderId = order_key.orderId
+  AND item_key.itemId = NF2.itemId
+GROUP BY customerId, customerName
+ORDER BY SUM(price) DESC
+LIMIT 1;
+
+
+-- Third normalization form
+CREATE TABLE NF3
+(
+    orderId int,
+    itemId  int,
+    PRIMARY KEY (orderId, itemId)
+);
+INSERT INTO NF3 (orderId, itemId)
+SELECT orderId, itemId
+FROM "TaskSampleTable";
+
+CREATE TABLE price_key
+(
+    itemId   int,
+    orderId  int,
+    quantity int,
+    price    double precision,
+    PRIMARY KEY (quantity, price)
+);
+INSERT INTO price_key (quantity, price, itemId, orderId)
+SELECT quantity, price, itemId, orderId
+FROM "TaskSampleTable";
+
+--first query NF3
+SELECT NF3.orderId, SUM(quantity) as ordered_Items, SUM(price_key.price) as total_price
+FROM NF3,
+     order_key,
+     item_key,
+     price_key
+WHERE NF3.itemId = price_key.itemId
+  AND NF3.orderId = price_key.orderId
+  AND NF3.orderId = order_key.orderId
+  AND NF3.itemId = item_key.itemId
+GROUP BY NF3.orderId;
+
+--second query NF3
+SELECT customerId, customerName, SUM(price) as max_sum
+FROM NF3, order_key, item_key, price_key
+WHERE NF3.itemId = price_key.itemId
+  AND NF3.orderId = price_key.orderId
+  AND NF3.orderId = order_key.orderId
+  AND NF3.itemId = item_key.itemId
+GROUP BY customerId, customerName
+ORDER BY SUM(price) DESC
+LIMIT 1;
