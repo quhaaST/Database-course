@@ -1,0 +1,28 @@
+1) 
+EXPLAIN ANALYZE SELECT * FROM "customer" WHERE id BETWEEN 10 AND 1000;
+The cost without the index: 67.92
+The actual time without the index: 0.206
+
+CREATE INDEX id_dx ON "customer" USING btree (id)
+The cost with the index: 67.92
+The actual time with the index: 0.151
+
+2) 
+EXPLAIN ANALYZE SELECT * FROM "customer" WHERE LENGTH(name) > 20
+The cost without the index: 4529.0
+The actual time without the index: 14.270
+
+CREATE INDEX namedx ON "customer" USING btree(name)
+The cost with the index: 4529.0
+The actual time with the index: 12.910
+
+3)
+EXPLAIN ANALYZE SELECT * FROM "customer" WHERE name='Sandra Thomas'
+The cost without the index: 12.30
+The actual time without the index: 0.062
+
+CREATE INDEX namedx2 ON "customer" USING btree(name)
+The cost with the index: 11.89
+The actual time with the index: 0.018
+
+
