@@ -18,11 +18,11 @@ The actual time with the index: 12.910
 
 3)
 EXPLAIN ANALYZE SELECT * FROM "customer" WHERE name='Sandra Thomas'
-The cost without the index: 12.30
-The actual time without the index: 0.062
+The cost without the index: 4279.0
+The actual time without the index: 11.425
 
-CREATE INDEX namedx2 ON "customer" USING btree(name)
-The cost with the index: 11.89
-The actual time with the index: 0.018
+CREATE INDEX namedx2 ON "customer" USING hash(name)
+The cost with the index: 12.30
+The actual time with the index: 0.066
 
 
