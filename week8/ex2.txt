@@ -1,0 +1,8 @@
+SELECT title FROM (SELECT * FROM film WHERE film.film_id NOT IN 
+(SELECT distinct film_id FROM rental INNER JOIN inventory ON rental.inventory_id=inventory.inventory_id)) as unrented_films
+INNER JOIN film_category ON unrented_films.film_id = film_category.film_id
+INNER JOIN category ON film_category.category_id = category.category_id
+WHERE (name = 'Sci-Fi' or name = 'Horror') and (rating = 'R' or rating = 'PG-13')
+
+The JOIN operations is expensive, which can be improved by using btree indices for the joining conditions.
+Moreover, the checking for film category and rating is expensive, but it can be improved by using hash indices to support faster comparation.
