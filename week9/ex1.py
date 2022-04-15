@@ -32,6 +32,7 @@ while row is not None:
 	except Exception:
 		print('Location not found')
 	arr.append((row[0], latitude, longitude))
+	print((latitude, longitude))
 	row = cur.fetchone()
 # close the communication with the PostgreSQL database server
 cur.close()
